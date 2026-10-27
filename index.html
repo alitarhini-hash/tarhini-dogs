@@ -14,6 +14,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Tarhini Dogs">
+  <link rel="stylesheet" href="https://unpkg.com/lenis@1.3.27/dist/lenis.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -116,6 +117,7 @@
 
   <main id="home">
     <section class="hero">
+      <div class="hero-rays" aria-hidden="true"></div>
       <div class="wrap">
         <div class="reveal">
           <span class="pill" data-i="pill">📍 Hamra Street, Beirut</span>
@@ -123,7 +125,7 @@
           <h1 data-i="h1">Hot dogs worth <span>the walk.</span></h1>
           <p class="lead" data-i="lead">The most delicious hot dogs in Lebanon, made fresh to order. Pick a dog, add fries, grab a cold drink.</p>
           <div class="cta">
-            <a class="btn" href="#menu" data-i="ordernow">Order now</a>
+            <a class="btn star-border" href="#menu" data-i="ordernow">Order now</a>
             <a class="btn ghost" href="#about" data-i="story">Our story</a>
           </div>
           <div class="stats">
@@ -340,6 +342,9 @@
     </div>
   </aside>
 
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/lenis@1.3.27/dist/lenis.min.js"></script>
   <script>
     const PHONE = "9613683218"; // country code + number, no + or spaces
 
@@ -576,27 +581,61 @@
     }, true);
     document.addEventListener("load", (e) => { if (e.target.id === "lb-img") $("lb-photo").classList.add("ok"); }, true);
 
-    /* ---------- Scroll animations + count-up numbers ---------- */
+    /* ---------- GSAP + ScrollTrigger + Lenis ---------- */
+    let lenis = null;
+    if (!reduce && window.gsap && window.ScrollTrigger && window.Lenis) {
+      gsap.registerPlugin(ScrollTrigger);
+      lenis = new Lenis({ lerp: 0.075, smoothWheel: true, anchors: true, allowNestedScroll: true });
+      lenis.on("scroll", ScrollTrigger.update);
+      gsap.ticker.add((time) => lenis.raf(time * 1000));
+      gsap.ticker.lagSmoothing(0);
+      const scrollLocks = new MutationObserver(() => {
+        if (["open", "side-open", "noscroll"].some((name) => document.body.classList.contains(name))) lenis.stop();
+        else lenis.start();
+      });
+      scrollLocks.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    }
+
+    /* ---------- React Bits-style Blur Text, section reveals + count-up ---------- */
+    const watchedMotion = new WeakSet();
     function countUp(el) {
       const to = +el.dataset.to, pre = el.dataset.pre || "", suf = el.dataset.suf || "";
-      if (reduce) { el.textContent = pre + to + suf; return; }
-      const start = performance.now();
-      const step = (now) => {
-        const p = Math.min((now - start) / 1200, 1);
-        el.textContent = pre + Math.round(to * (1 - Math.pow(1 - p, 3))) + suf;
-        if (p < 1) requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
+      if (reduce || !window.gsap) { el.textContent = pre + to + suf; return; }
+      const value = { amount: 0 };
+      gsap.to(value, { amount: to, duration: 1.25, ease: "power2.out", snap: { amount: 1 },
+        onUpdate: () => { el.textContent = pre + value.amount + suf; } });
     }
-    const io = new IntersectionObserver((entries) => entries.forEach((en) => {
-      if (!en.isIntersecting) return;
-      const el = en.target; io.unobserve(el);
-      if (el.classList.contains("num")) { countUp(el); return; }
-      el.classList.add("in");
-      setTimeout(() => el.classList.remove("reveal", "in"), 900);
-    }), { threshold: 0.12 });
-    const watch = (root) => root.querySelectorAll(".reveal").forEach((el) => io.observe(el));
-    document.querySelectorAll(".reveal, .num").forEach((el) => io.observe(el));
+    function watch(root) {
+      root.querySelectorAll(".reveal, .num").forEach((el) => {
+        if (watchedMotion.has(el)) return;
+        watchedMotion.add(el);
+        if (el.classList.contains("num")) {
+          if (reduce || !window.ScrollTrigger || !window.gsap) countUp(el);
+          else gsap.delayedCall(0, () => ScrollTrigger.create({ trigger: el, start: "top 88%", once: true, onEnter: () => countUp(el) }));
+          return;
+        }
+        if (reduce || !window.gsap || !window.ScrollTrigger) {
+          el.classList.remove("reveal", "in");
+          return;
+        }
+        gsap.fromTo(el, { autoAlpha: 0, y: 18 }, {
+          autoAlpha: 1, y: 0, duration: 0.78, ease: "power2.out",
+          scrollTrigger: { trigger: el, start: "top 88%", once: true },
+          onComplete: () => el.classList.remove("reveal", "in")
+        });
+      });
+    }
+    function animateBlurText() {
+      const title = document.querySelector(".hero h1");
+      if (!title || reduce || !window.gsap) return;
+      gsap.fromTo(title, { autoAlpha: 0, y: 12, filter: "blur(8px)" }, {
+        autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 0.9, ease: "power2.out", delay: 0.12
+      });
+    }
+    watch(document);
+    if (!reduce && window.gsap) {
+      gsap.to(".hero-rays", { rotation: 2.5, xPercent: 1.5, duration: 10, ease: "sine.inOut", repeat: -1, yoyo: true });
+    }
 
     /* ---------- Marquee ---------- */
     function drawMarquee() {
@@ -1130,6 +1169,7 @@
       $("close-side").setAttribute("aria-label", t("closeMenu"));
       $("wa").href = "https://wa.me/" + PHONE + "?text=" + encodeURIComponent("Hello Tarhini’s Dogs!");
       redraw(anim);
+      animateBlurText();
       try { localStorage.setItem("lang", l); } catch (e) {}
     }
     $("lang").addEventListener("click", () => setLang(L === "ar" ? "en" : "ar"));
