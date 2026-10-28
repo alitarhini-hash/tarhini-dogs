@@ -520,6 +520,95 @@ footer { padding-top: 42px; }
   .cta .btn { flex: 1 1 auto; padding-inline: 16px; }
 }
 
+/* Signature redesign: bold, polished street-food look */
+.nav .wrap { max-width: 1240px; }
+.hero { background: linear-gradient(180deg, rgba(255,201,51,.045), transparent 72%); }
+html[data-theme="dark"] .hero { background: linear-gradient(180deg, rgba(255,201,51,.035), transparent 72%); }
+.hero .wrap { min-height: min(680px, calc(100svh - 110px)); }
+.hero .reveal { padding-block: 20px; }
+.hero h1 { max-width: 10.5ch; font-size: clamp(3.4rem, 8vw, 7rem); }
+html[lang="ar"] .hero h1 { max-width: 13ch; font-size: clamp(3rem, 7vw, 6.2rem); }
+.hero .pill { box-shadow: 0 0 0 1px var(--line), 0 10px 26px rgba(36,17,13,.07); }
+.hero .cta { margin-top: 4px; }
+.hero .cta .btn:first-child { min-width: 154px; }
+.hero .stats { max-width: 570px; }
+.art { max-width: 590px; }
+.blob { inset: 5%; border-radius: 47% 53% 50% 50% / 48% 44% 56% 52%; box-shadow: 0 22px 48px rgba(255,201,51,.18); }
+.a1 { width: 69%; top: 6%; inset-inline-start: 12%; border: 8px solid var(--cream); border-radius: 38px; }
+.a2 { width: 43%; bottom: 5%; border-width: 8px; border-radius: 32px; }
+.badge { top: 3%; inset-inline-end: 0; padding: 13px 20px; box-shadow: 0 14px 34px rgba(36,17,13,.2); }
+.mascot { width: 23%; }
+.marquee { box-shadow: 0 12px 30px rgba(36,17,13,.12); }
+.block { padding-block: clamp(76px, 9vw, 116px); }
+.block > .wrap > h2 { margin-bottom: 20px; }
+.eyebrow { letter-spacing: .12em; }
+#menu { background-image: radial-gradient(ellipse at 100% 0, rgba(255,201,51,.08), transparent 34%); }
+html[data-theme="dark"] #menu { background-image: radial-gradient(ellipse at 100% 0, rgba(255,201,51,.045), transparent 34%); }
+.search { max-width: 500px; margin-top: 26px; }
+.search input { min-height: 54px; border-radius: 18px; box-shadow: 0 8px 26px rgba(36,17,13,.045); }
+.tabs { gap: 8px; margin-top: 18px; padding-block: 14px; }
+.tab { padding: 11px 20px; }
+.cmbox { min-height: 285px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; isolation: isolate; position: relative; }
+.cmbox::after { content: ""; position: absolute; z-index: -1; width: 310px; aspect-ratio: 1; inset-inline-end: -76px; top: -118px; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; box-shadow: 0 0 0 28px rgba(255,255,255,.035), 0 0 0 64px rgba(255,255,255,.025); }
+.grid { gap: 24px; }
+.card { border-radius: 26px; }
+.ph { aspect-ratio: 4 / 3; }
+.info { padding: 20px 22px 22px; }
+.info .tag { margin-bottom: 2px; }
+.info .row { padding-top: 16px; }
+.add { padding: 10px 20px; border-radius: 999px; }
+.tcard { padding: 32px 22px; border-radius: 26px; }
+.rcard { min-height: 245px; }
+.cbox { min-height: 150px; border-radius: 22px; }
+.map iframe { border: 1px solid var(--line); }
+
+@media (max-width: 1000px) {
+  .hero .wrap { min-height: auto; }
+}
+@media (max-width: 820px) {
+  .hero { padding-block: 38px 58px; }
+  .hero .wrap { gap: 10px; }
+  .hero .reveal { padding-block: 12px; }
+  .hero h1 { max-width: 13ch; }
+  .art { order: 0; width: min(100%, 500px); margin: 12px auto 0; }
+  .block { padding-block: 70px; }
+  .cmbox { min-height: 250px; }
+}
+@media (max-width: 600px) {
+  .nav .wrap { width: calc(100% - 24px); height: 62px; gap: 4px; }
+  .left { gap: 3px; }
+  .brand svg { width: 28px; height: 38px; }
+  .tools { min-width: 0; flex: 1 1 auto; justify-content: flex-end; gap: 3px; }
+  .icon-btn { min-width: 35px; height: 36px; padding-inline: 7px; font-size: .82rem; }
+  .cur { width: 66px; max-width: 66px; height: 36px; padding-inline: 4px; font-size: .72rem; }
+  .cart-btn { min-width: 68px; height: 38px; padding: 8px 9px; font-size: .86rem; }
+  .hero .wrap { gap: 4px; }
+  .hero .reveal { padding-block: 6px; }
+  .hero h1 { max-width: 12ch; font-size: clamp(3rem, 12vw, 4.4rem); }
+  .hero .pill { margin-bottom: 9px; padding: 7px 11px; font-size: .82rem; }
+  .hero .cta .btn:first-child { min-width: 0; }
+  .stats > div { padding: 10px 8px; }
+  .block { padding-block: 60px; }
+  .block > .wrap > h2 { margin-bottom: 16px; }
+  .cmbox { min-height: 230px; }
+  .tabs { top: 62px; }
+  .cbox { min-height: 0; }
+}
+@media (max-width: 360px) {
+  .nav .wrap { width: calc(100% - 16px); }
+  .left { gap: 1px; }
+  #open-side { min-width: 32px; width: 32px; padding-inline: 4px; }
+  .brand svg { width: 25px; height: 34px; }
+  .tools { gap: 2px; }
+  .icon-btn { min-width: 32px; padding-inline: 5px; font-size: .78rem; }
+  .cur { width: 58px; max-width: 58px; }
+  .cart-btn { min-width: 64px; padding-inline: 7px; }
+  .hero h1 { font-size: 2.9rem; }
+  .stats { gap: 6px; }
+  .stats > div { padding-inline: 6px; }
+  .stats small { font-size: .68rem; }
+}
+
 /* Respect people who prefer less motion */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
