@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Tarhini Dogs">
   <link rel="stylesheet" href="https://unpkg.com/lenis@1.3.27/dist/lenis.css">
-  <link rel="stylesheet" href="style.css?v=brasserie-20261028">
+  <link rel="stylesheet" href="style.css?v=modern-order-20261028">
 </head>
 <body>
 
@@ -311,8 +311,9 @@
       <h2 id="ty-h" data-i="tyh">Thank You for Ordering!</h2>
       <p class="ty-t" data-i="tyt">Your order is on its way to us on WhatsApp. Just press Send there, and we’ll confirm it very soon.</p>
       <p class="ty-eta" id="ty-eta"></p>
+      <p class="wa-wait" id="ty-wait" role="status" aria-live="polite"></p>
       <div class="ty-btns">
-        <a class="btn" id="ty-wa" href="https://wa.me/9613683218" target="_blank" rel="noopener" data-i="tywa">Open WhatsApp</a>
+        <a class="btn" id="ty-wa" href="https://wa.me/9613683218" target="_blank" rel="noopener" aria-disabled="true" tabindex="-1" data-i="tywa">Open WhatsApp</a>
         <button class="btn ghost" id="ty-snd" type="button"></button>
         <button class="btn ghost" id="ty-back" type="button" data-i="tyback">Back to menu</button>
       </div>
@@ -373,6 +374,7 @@
         yourTurn: "Your turn", cpuTurn: "Computer is thinking…", youWin: "You win! 🎉", cpuWin: "The computer wins this one.", drawMsg: "It’s a draw.",
         cell: (r, c, v) => "Row " + r + ", column " + c + ", " + (v || "empty"),
         sMute: "🔊 Mute", sUnmute: "🔇 Unmute", sPlay: "🎵 Play music",
+        waWait: (n) => "Enjoy the celebration · continue to WhatsApp in " + n + "…", waReady: "Your order is ready. Continue to WhatsApp when you’re ready.",
         words: ["Made fresh to order", "Classic", "Chicago", "Loaded fries", "Ice-cold drinks", "Hamra Street"] },
       ar: { all: "الكل", combos: "العروض", dogs: "هوت دوغ", sides: "جانبيات", drinks: "مشروبات", add: "أضف", added: "تمت الإضافة ✓", choose: "اختر",
         view: "عرض", close: "إغلاق", openMenu: "فتح القائمة", closeMenu: "إغلاق القائمة",
@@ -392,6 +394,7 @@
         yourTurn: "دورك", cpuTurn: "الكمبيوتر يفكّر…", youWin: "فزت! 🎉", cpuWin: "فاز الكمبيوتر هذه المرة.", drawMsg: "تعادل.",
         cell: (r, c, v) => "الصف " + r + "، العمود " + c + "، " + (v || "فارغ"),
         sMute: "🔊 كتم الصوت", sUnmute: "🔇 تشغيل الصوت", sPlay: "🎵 تشغيل الموسيقى",
+        waWait: (n) => "استمتع بالاحتفال · تابع إلى واتساب بعد " + n + "…", waReady: "طلبك جاهز. يمكنك المتابعة إلى واتساب الآن.",
         words: ["يُحضَّر طازجًا عند الطلب", "كلاسيك", "شيكاغو", "بطاطا محمّلة", "مشروبات باردة", "شارع الحمرا"] }
     };
 
@@ -1021,21 +1024,50 @@
       sndLabel();
     });
 
-    /* ---------- Thank-you screen ---------- */
+    /* ---------- Thank-you screen and five-second WhatsApp handoff ---------- */
+    let orderGateInterval = null;
+    function clearOrderGate() {
+      if (orderGateInterval) { clearInterval(orderGateInterval); orderGateInterval = null; }
+    }
+    function unlockWhatsApp() {
+      clearOrderGate();
+      stopMusic(); sndLabel();
+      $("ty-wait").textContent = t("waReady");
+      $("ty-wait").classList.add("is-ready");
+      $("ty-wa").removeAttribute("aria-disabled");
+      $("ty-wa").removeAttribute("tabindex");
+      $("ty-wa").classList.remove("is-waiting");
+    }
     function showThanks(url, r) {
       Object.keys(cart).forEach((k) => delete cart[k]);
       render(); setCart(false);
       $("ty-wa").href = url; $("ty-eta").textContent = "⏱ " + t("eta")(r[0], r[1]);
+      $("ty-wa").setAttribute("aria-disabled", "true");
+      $("ty-wa").tabIndex = -1;
+      $("ty-wa").classList.add("is-waiting");
+      $("ty-wait").classList.remove("is-ready");
+      let seconds = 5;
+      $("ty-wait").textContent = t("waWait")(seconds);
       $("ty").classList.add("show"); $("ty").setAttribute("aria-hidden", "false"); document.body.classList.add("noscroll");
-      startMusic(); sndLabel(); launchConfetti(10000, true);
+      startMusic(); sndLabel(); launchConfetti(5000, true);
+      clearOrderGate();
+      orderGateInterval = setInterval(() => {
+        seconds -= 1;
+        if (seconds <= 0) unlockWhatsApp();
+        else $("ty-wait").textContent = t("waWait")(seconds);
+      }, 1000);
       $("ty-back").focus({ preventScroll: true });
     }
     function closeThanks() {
       $("ty").classList.remove("show"); $("ty").setAttribute("aria-hidden", "true"); document.body.classList.remove("noscroll");
-      stopMusic(); stopConfetti();
+      clearOrderGate(); stopMusic(); stopConfetti();
       $("open-cart").focus({ preventScroll: true });
     }
     $("ty-back").addEventListener("click", closeThanks);
+    $("ty-wa").addEventListener("click", (e) => {
+      if (e.currentTarget.getAttribute("aria-disabled") === "true") { e.preventDefault(); return; }
+      stopMusic(); stopConfetti(); closeThanks();
+    });
 
     /* ---------- Payment choice + sending the order ---------- */
     function payNote() {
@@ -1060,7 +1092,6 @@
       msg += "\nTotal: " + usdTxt(total) + " USD" + (cur !== "USD" ? " (about " + fmt(total) + ")" : "");
       msg += "\nName: " + name + "\nAddress: " + addr + "\nPayment: " + pay + "\nEstimated time: about " + r[0] + "–" + r[1] + " min";
       const url = "https://wa.me/" + PHONE + "?text=" + encodeURIComponent(msg);
-      window.open(url, "_blank");
       showThanks(url, r);
     });
 
