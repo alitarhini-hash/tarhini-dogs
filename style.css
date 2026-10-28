@@ -612,7 +612,7 @@ html[data-theme="dark"] #menu { background-image: radial-gradient(ellipse at 100
 /* Complete responsive visual system */
 :root { --r: 22px; --shadow: 0 18px 48px rgba(36,17,13,.12); }
 html[data-theme="dark"] { --shadow: 0 18px 48px rgba(0,0,0,.42); }
-body { min-width: 320px; background-image: radial-gradient(ellipse at 4% 10%, rgba(255,201,51,.07), transparent 30%); }
+body { background-image: radial-gradient(ellipse at 4% 10%, rgba(255,201,51,.07), transparent 30%); }
 html[data-theme="dark"] body { background-image: radial-gradient(ellipse at 4% 10%, rgba(255,201,51,.035), transparent 30%); }
 .wrap { width: min(1240px, calc(100% - 48px)); }
 
@@ -782,6 +782,18 @@ footer { padding-top: 42px; }
   .tgrid, .cgrid { grid-template-columns: minmax(0,1fr); }
   .tcard { max-width: 360px; width: 100%; margin-inline: auto; }
   .cbox { padding: 18px; }
+}
+@media (max-width: 320px) {
+  .wrap { width: calc(100% - 20px); }
+  .nav .wrap { width: calc(100% - 12px); gap: 2px; padding-inline: 6px; }
+  #open-side { width: 28px; min-width: 28px; padding-inline: 3px; }
+  .brand svg { width: 20px; height: 28px; }
+  .tools { gap: 1px; }
+  .icon-btn { min-width: 27px; padding-inline: 3px; font-size: .7rem; }
+  .cur { width: 48px; max-width: 48px; font-size: .64rem; }
+  .cart-btn { min-width: 52px; padding-inline: 4px; font-size: .7rem; }
+  .hero .stats { gap: 4px; }
+  .hero .stats small { font-size: .6rem; }
 }
 @media (hover: none) {
   .card:hover, .ccard:hover, .tcard:hover, .cbox:hover { transform: none; }
