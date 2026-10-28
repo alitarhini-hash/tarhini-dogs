@@ -4,7 +4,6 @@
   const setupRequired = $("setup-required"), login = $("login"), app = $("app");
   let client = null, settings = null, menuItems = [], staffMembers = [];
   const bucket = cfg.bucket || "store-media";
-  const ownerEmail = "alloushi.tarhini@gmail.com";
 
   function status(id, message, error = false) {
     const el = $(id);
@@ -233,19 +232,18 @@
   $("login-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const email = $("login-email").value.trim().toLowerCase();
-    if (email !== ownerEmail) { status("login-status", "This sign-in is restricted to the configured store owner.", true); return; }
     status("login-status", "Sending your one-time sign-in link…");
     try {
       const { error } = await client.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
       if (error) throw error;
-      status("login-status", "Check your email for the secure sign-in link. Only the configured store owner can open the dashboard.");
+      status("login-status", "Check your email for the secure sign-in link. Supabase verifies owner access before allowing edits.");
     } catch (error) { status("login-status", error.message || "Could not send the sign-in link.", true); }
   });
   $("sign-out").addEventListener("click", async () => { await client.auth.signOut(); setConnected(null); });
   function acceptSession(session) {
-    if (session && session.user.email?.toLowerCase() !== ownerEmail) {
+    if (session && session.user.app_metadata?.store_owner !== true) {
       setConnected(null);
-      status("login-status", "This sign-in is restricted to the configured store owner.", true);
+      status("login-status", "This account is not designated as the store owner in Supabase.", true);
       setTimeout(() => client.auth.signOut(), 0);
       return;
     }

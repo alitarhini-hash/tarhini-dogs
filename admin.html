@@ -22,8 +22,8 @@
 
     <section id="login" class="panel auth-panel hidden">
       <p class="kicker">Private access · owner only</p><h1>Sign in<span style="color:var(--red)">.</span></h1>
-      <p class="muted">We’ll email you a one-time sign-in link. Only the owner email configured in the database can edit this store.</p>
-      <form id="login-form"><div class="field"><label for="login-email">Owner email</label><input id="login-email" type="email" autocomplete="email" required value="alloushi.tarhini@gmail.com"></div><button class="primary" type="submit">Send secure sign-in link</button></form>
+      <p class="muted">We’ll email you a one-time sign-in link. Only an account explicitly designated as the store owner in Supabase can edit this store.</p>
+      <form id="login-form"><div class="field"><label for="login-email">Owner email</label><input id="login-email" type="email" autocomplete="email" required ></div><button class="primary" type="submit">Send secure sign-in link</button></form>
       <p id="login-status" class="status" role="status" aria-live="polite"></p>
     </section>
 

@@ -1,6 +1,6 @@
 -- Tarhini's Dogs content manager
 -- Run this whole file once in Supabase Dashboard > SQL Editor.
--- The only account allowed to edit content is alloushi.tarhini@gmail.com.
+-- Only an account explicitly marked as the owner in Supabase app_metadata can edit content.
 
 create extension if not exists pgcrypto;
 
@@ -11,7 +11,7 @@ stable
 security definer
 set search_path = ''
 as $$
-  select lower(coalesce(auth.jwt() ->> 'email', '')) = 'alloushi.tarhini@gmail.com';
+  select coalesce(auth.jwt() -> 'app_metadata' ->> 'store_owner', 'false') = 'true';
 $$;
 
 create table if not exists public.store_settings (
