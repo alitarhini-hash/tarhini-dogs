@@ -1255,3 +1255,5 @@ html[dir="rtl"] .wa-wait::after { transform-origin: right center; }
   .hero-rays, .track, .mascot, .wa::before { display: none; animation: none; }
   .card:hover { transform: none; }
 }
+.add:disabled { cursor: not-allowed; opacity: .62; filter: grayscale(.4); box-shadow: none; }
+.sold-out .price { text-decoration: line-through; text-decoration-color: var(--red); }

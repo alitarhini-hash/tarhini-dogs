@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Tarhini Dogs">
   <link rel="stylesheet" href="https://unpkg.com/lenis@1.3.27/dist/lenis.css">
-  <link rel="stylesheet" href="style.css?v=hamra-poster-20261028">
+  <link rel="stylesheet" href="style.css?v=admin-preview-20261028">
 </head>
 <body>
 
@@ -373,7 +373,7 @@
         you: "You", cpu: "Computer", draws: "Draws",
         yourTurn: "Your turn", cpuTurn: "Computer is thinking…", youWin: "You win! 🎉", cpuWin: "The computer wins this one.", drawMsg: "It’s a draw.",
         cell: (r, c, v) => "Row " + r + ", column " + c + ", " + (v || "empty"),
-        sMute: "🔊 Mute", sUnmute: "🔇 Unmute", sPlay: "🎵 Play music",
+        sMute: "🔊 Mute", sUnmute: "🔇 Unmute", sPlay: "🎵 Play music", soldOut: "Sold out",
         waWait: (n) => "Enjoy the celebration · continue to WhatsApp in " + n + "…", waReady: "Your order is ready. Continue to WhatsApp when you’re ready.",
         words: ["Made fresh to order", "Classic", "Chicago", "Loaded fries", "Ice-cold drinks", "Hamra Street"] },
       ar: { all: "الكل", combos: "العروض", dogs: "هوت دوغ", sides: "جانبيات", drinks: "مشروبات", add: "أضف", added: "تمت الإضافة ✓", choose: "اختر",
@@ -393,7 +393,7 @@
         you: "أنت", cpu: "الكمبيوتر", draws: "تعادل",
         yourTurn: "دورك", cpuTurn: "الكمبيوتر يفكّر…", youWin: "فزت! 🎉", cpuWin: "فاز الكمبيوتر هذه المرة.", drawMsg: "تعادل.",
         cell: (r, c, v) => "الصف " + r + "، العمود " + c + "، " + (v || "فارغ"),
-        sMute: "🔊 كتم الصوت", sUnmute: "🔇 تشغيل الصوت", sPlay: "🎵 تشغيل الموسيقى",
+        sMute: "🔊 كتم الصوت", sUnmute: "🔇 تشغيل الصوت", sPlay: "🎵 تشغيل الموسيقى", soldOut: "نفد",
         waWait: (n) => "استمتع بالاحتفال · تابع إلى واتساب بعد " + n + "…", waReady: "طلبك جاهز. يمكنك المتابعة إلى واتساب الآن.",
         words: ["يُحضَّر طازجًا عند الطلب", "كلاسيك", "شيكاغو", "بطاطا محمّلة", "مشروبات باردة", "شارع الحمرا"] }
     };
@@ -448,6 +448,15 @@
       ["Fanta", 3, "drinks", "fanta", "🥤"], ["Sprite", 3, "drinks", "sprite", "🥤"],
       ["Water", 1, "drinks", "water", "💧"]
     ];
+    // Browser-local preview settings. Shared production controls require a backend.
+    const MENU_SETTINGS_KEY = "tarhiniDogsMenuSettings";
+    let menuSettings = {};
+    try { menuSettings = JSON.parse(localStorage.getItem(MENU_SETTINGS_KEY) || "{}") || {}; } catch (e) {}
+    MENU.forEach((item, i) => {
+      const saved = menuSettings[i];
+      if (saved && Number.isFinite(+saved.price) && +saved.price >= 0) item[1] = +saved.price;
+      item[5] = !saved || saved.available !== false;
+    });
     const NAME_EN = MENU.map((m) => m[0]);
     const NAME_AR = ["هوت دوغ كلاسيك", "شيكاغو", "إيطالي", "نوتيلا", "دودجر دوغ", "هاوايان", "كارولينا",
       "بطاطا مقلية", "بطاطا محمّلة", "كوكا كولا", "فانتا", "سبرايت", "مياه"];
@@ -682,16 +691,21 @@
       $("cmgrid").innerHTML = COMBOS.map((c, x) => {
         if (!comboMatch(x)) return "";
         const dog = c[3], side = c[4], old = MENU[dog][1] + MENU[side][1] + MENU[CDRINKS[0]][1];
+        const available = MENU[dog][5] !== false && MENU[side][5] !== false && CDRINKS.some((d) => MENU[d][5] !== false);
+        if (MENU[CDRINKS[csel[x].drink]][5] === false) {
+          const firstDrink = CDRINKS.findIndex((d) => MENU[d][5] !== false);
+          if (firstDrink >= 0) csel[x].drink = firstDrink;
+        }
         const meat = OPTS[dog] ? "<label>" + t("meat") + '<select data-c="' + x + '" data-k="meat">' +
           OPTS[dog].map((m, k) => '<option value="' + k + '"' + (csel[x].meat === k ? " selected" : "") + ">" + m[lg()] + "</option>").join("") + "</select></label>" : "";
         const drink = "<label>" + t("drinkL") + '<select data-c="' + x + '" data-k="drink">' +
-          CDRINKS.map((d, k) => '<option value="' + k + '"' + (csel[x].drink === k ? " selected" : "") + ">" + nm[d] + "</option>").join("") + "</select></label>";
+          CDRINKS.map((d, k) => '<option value="' + k + '"' + (MENU[d][5] === false ? " disabled" : "") + (csel[x].drink === k ? " selected" : "") + ">" + nm[d] + "</option>").join("") + "</select></label>";
         return '<article class="ccard' + (anim ? " reveal" : "") + '"><div class="cph">🌭' + imgTag("image/" + MENU[dog][3], 0, c[1 + lg()]) +
           '<span class="save">' + t("save")(fmt(old - c[5])) + "</span></div>" +
           '<div class="cinfo"><span class="tag">' + t("combo") + "</span><h3>" + c[1 + lg()] + "</h3>" +
           '<p class="cinc">' + nm[dog] + " + " + nm[side] + " + " + t("adrink") + "</p>" +
           '<div class="sel">' + meat + drink + "</div>" +
-          '<div class="row"><span class="price" dir="ltr"><s>' + fmt(old) + "</s> " + fmt(c[5]) + '</span><button class="add" data-c="' + x + '">' + t("add") + "</button></div></div></article>";
+          '<div class="row"><span class="price" dir="ltr"><s>' + fmt(old) + "</s> " + fmt(c[5]) + '</span><button class="add" data-c="' + x + '"' + (available ? "" : " disabled") + '>' + (available ? t("add") : t("soldOut")) + "</button></div></div></article>";
       }).join("");
       if (anim) watch($("cmgrid"));
     }
@@ -711,11 +725,11 @@
       if (showC) drawCombos(anim);
       const items = tab === "combos" ? [] : MENU.map((m, i) => i).filter(matches);
       $("grid").innerHTML = items.map((i) => {
-        const m = MENU[i], nm = nameOf(i), label = OPTS[i] ? t("choose") : t("add");
+        const m = MENU[i], nm = nameOf(i), available = m[5] !== false, label = available ? (OPTS[i] ? t("choose") : t("add")) : t("soldOut");
         return '<article class="card' + (anim ? " reveal" : "") + '"><button class="ph" type="button" data-v="' + i + '" aria-label="' + t("view") + " " + nm + '">' + m[4] +
           imgTag("image/" + m[3], 0, nm) + "</button>" +
-          '<div class="info"><span class="tag">' + t(m[2]) + "</span><h3>" + nm + "</h3>" +
-          '<div class="row"><span class="price" dir="ltr">' + fmt(m[1]) + '</span><button class="add" data-x="' + i + '" aria-label="' + label + " " + nm + '">' + label + "</button></div></div></article>";
+          '<div class="info' + (available ? "" : " sold-out") + '"><span class="tag">' + t(m[2]) + "</span><h3>" + nm + "</h3>" +
+          '<div class="row"><span class="price" dir="ltr">' + fmt(m[1]) + '</span><button class="add" data-x="' + i + '"' + (available ? "" : " disabled") + ' aria-label="' + label + " " + nm + '">' + label + "</button></div></div></article>";
       }).join("") || (showC ? "" : '<p class="none" role="status">' + t("none") + "</p>");
       if (anim) watch($("grid"));
       const tilt = matchMedia("(hover: hover)").matches && !reduce;
@@ -795,7 +809,12 @@
       $("lb-ing").hidden = !d; $("lb-desc").hidden = !d; $("lb-desc").textContent = d;
       $("lb-opts").innerHTML = team ? "" : optsHTML(view);
       $("lb-row").hidden = team;
-      if (!team) { $("lb-price").textContent = fmt(lbTotal()); $("lb-add").textContent = t("add"); }
+      if (!team) {
+        const available = MENU[view][5] !== false;
+        $("lb-price").textContent = fmt(lbTotal());
+        $("lb-add").textContent = available ? t("add") : t("soldOut");
+        $("lb-add").disabled = !available;
+      }
       $("lb-close").setAttribute("aria-label", t("close"));
     }
     function openView(kind, i, src) {
