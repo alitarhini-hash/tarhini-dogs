@@ -15,7 +15,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Tarhini Dogs">
   <link rel="stylesheet" href="https://unpkg.com/lenis@1.3.27/dist/lenis.css">
-  <link rel="stylesheet" href="style.css?v=admin-preview-20261028">
+  <link rel="stylesheet" href="style.css?v=owner-cms-20261028">
 </head>
 <body>
 
@@ -216,10 +216,10 @@
         <div class="eyebrow reveal" data-i="econtact">Get in touch</div>
         <h2 class="reveal" data-i="hcontact">Come say hello.</h2>
         <div class="cgrid reveal">
-          <div class="cbox"><h3 data-i="c1h">📍 Find us</h3><p data-i="c1p">Hamra Street, near Geox<br>Beirut, Lebanon</p></div>
-          <div class="cbox"><h3 data-i="c2h">🕒 Hours</h3><p data-i="c2p">Mon to Sat: 11am to 9pm<br>Sunday: 12pm to 6pm</p></div>
-          <div class="cbox"><h3 data-i="c3h">📞 Call</h3><p><a dir="ltr" href="tel:+9613683218">+961 03 683 218</a></p></div>
-          <div class="cbox"><h3 data-i="c4h">✉️ Email</h3><p><a dir="ltr" href="mailto:Tarhini.hotdogs@gmail.com">Tarhini.hotdogs@gmail.com</a></p></div>
+          <div class="cbox"><h3 data-i="c1h">📍 Find us</h3><p id="store-address" data-i="c1p" style="white-space:pre-line">Hamra Street, near Geox<br>Beirut, Lebanon</p></div>
+          <div class="cbox"><h3 data-i="c2h">🕒 Hours</h3><p id="store-hours" data-i="c2p" style="white-space:pre-line">Mon to Sat: 11am to 9pm<br>Sunday: 12pm to 6pm</p></div>
+          <div class="cbox"><h3 data-i="c3h">📞 Call</h3><p><a id="store-phone" dir="ltr" href="tel:+9613683218">+961 03 683 218</a></p></div>
+          <div class="cbox"><h3 data-i="c4h">✉️ Email</h3><p><a id="store-email" dir="ltr" href="mailto:Tarhini.hotdogs@gmail.com">Tarhini.hotdogs@gmail.com</a></p></div>
           <div class="cbox"><h3 data-i="c5h">📱 Follow us</h3>
             <div class="socials">
               <a class="soc" href="https://www.instagram.com/alii.tarhinii" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ig"/></svg></a>
@@ -237,10 +237,10 @@
           <div class="eyebrow" data-i="eloc">Location</div>
           <h2 data-i="hloc">Visit us.</h2>
           <p class="locp" data-i="locp">Hamra Street, near Geox<br>Beirut, Lebanon</p>
-          <a class="btn" href="https://www.google.com/maps/dir/?api=1&amp;destination=Geox+Hamra+Street+Beirut" target="_blank" rel="noopener" data-i="dirs">Get directions</a>
+          <a class="btn" id="store-directions" href="https://www.google.com/maps/dir/?api=1&amp;destination=Geox+Hamra+Street+Beirut" target="_blank" rel="noopener" data-i="dirs">Get directions</a>
         </div>
         <div class="map reveal">
-          <iframe title="Map" src="https://www.google.com/maps?q=Geox+Hamra+Street+Beirut&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <iframe id="store-map" title="Map" src="https://www.google.com/maps?q=Geox+Hamra+Street+Beirut&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
       </div>
     </section>
@@ -346,8 +346,11 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
   <script src="https://unpkg.com/lenis@1.3.27/dist/lenis.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js?v=1"></script>
   <script>
-    const PHONE = "9613683218"; // country code + number, no + or spaces
+    let PHONE = "9613683218"; // country code + number, no + or spaces
+    let managedSettings = null;
 
     /* ---------- Currency ---------- */
     // Backup rates, used only if the live rates can't be loaded. All prices on the site are in USD.
@@ -448,15 +451,6 @@
       ["Fanta", 3, "drinks", "fanta", "🥤"], ["Sprite", 3, "drinks", "sprite", "🥤"],
       ["Water", 1, "drinks", "water", "💧"]
     ];
-    // Browser-local preview settings. Shared production controls require a backend.
-    const MENU_SETTINGS_KEY = "tarhiniDogsMenuSettings";
-    let menuSettings = {};
-    try { menuSettings = JSON.parse(localStorage.getItem(MENU_SETTINGS_KEY) || "{}") || {}; } catch (e) {}
-    MENU.forEach((item, i) => {
-      const saved = menuSettings[i];
-      if (saved && Number.isFinite(+saved.price) && +saved.price >= 0) item[1] = +saved.price;
-      item[5] = !saved || saved.available !== false;
-    });
     const NAME_EN = MENU.map((m) => m[0]);
     const NAME_AR = ["هوت دوغ كلاسيك", "شيكاغو", "إيطالي", "نوتيلا", "دودجر دوغ", "هاوايان", "كارولينا",
       "بطاطا مقلية", "بطاطا محمّلة", "كوكا كولا", "فانتا", "سبرايت", "مياه"];
@@ -515,7 +509,7 @@
     const CDRINKS = [9, 10, 11]; // Coke, Fanta, Sprite
 
     // Team: English name, Arabic name, role, photo file (.jpeg)
-    const TEAM = [["Ali Tarhini", "علي ترحيني", "Owner", "ali"], ["Youssef Fakih", "يوسف فقيه", "Chef", "usef"], ["Ali Youseff", "علي يوسف", "Manager", "manager"]];
+    const TEAM = [["Ali Tarhini", "علي ترحيني", "Owner", "المالك", "image/ali"], ["Youssef Fakih", "يوسف فقيه", "Chef", "الشيف", "image/usef"], ["Ali Youseff", "علي يوسف", "Manager", "المدير", "image/manager"]];
     const ROLE_AR = { Owner: "المالك", Chef: "الشيف", Manager: "المدير" };
 
     // Reviews: English name, Arabic name, English text (exactly as written), Arabic text, stars out of 5
@@ -575,7 +569,16 @@
       const i = base.lastIndexOf("/") + 1, cap = base.slice(0, i) + base.charAt(i).toUpperCase() + base.slice(i + 1);
       return EXTS.map((e) => base + e).concat(EXTS.map((e) => cap + e));
     }
-    const imgTag = (base, start, alt) => '<img src="' + base + EXTS[start] + '" data-base="' + base + '" data-s="' + start + '" alt="' + alt + '" loading="lazy">';
+    function photoBase(path) {
+      if (/^(https?:|data:|blob:)/i.test(path || "")) return path;
+      const value = path || "";
+      if (value.startsWith("image/")) return value.replace(/\.(jpg|jpeg|png|webp)$/i, "");
+      return ("image/" + value).replace(/\.(jpg|jpeg|png|webp)$/i, "");
+    }
+    const imgTag = (base, start, alt) => {
+      const remote = /^(https?:|data:|blob:)/i.test(base);
+      return '<img src="' + (remote ? base : base + EXTS[start]) + '" data-base="' + (remote ? "" : base) + '" data-s="' + start + '" alt="' + alt + '" loading="lazy">';
+    };
     // The address of a photo that has already loaded on a card (so the big view always shows the same photo)
     function loadedSrc(el) {
       const im = el && el.querySelector("img");
@@ -675,7 +678,7 @@
     });
     function matches(i) {
       const m = MENU[i];
-      if (tab !== "all" && m[2] !== tab) return false;
+      if (m[6] === false || (tab !== "all" && m[2] !== tab)) return false;
       if (!q) return true;
       return [m[0], NAME_AR[i], DESC.en[i], DESC.ar[i], UI.en[m[2]], UI.ar[m[2]]].join(" ").toLowerCase().includes(q);
     }
@@ -691,16 +694,16 @@
       $("cmgrid").innerHTML = COMBOS.map((c, x) => {
         if (!comboMatch(x)) return "";
         const dog = c[3], side = c[4], old = MENU[dog][1] + MENU[side][1] + MENU[CDRINKS[0]][1];
-        const available = MENU[dog][5] !== false && MENU[side][5] !== false && CDRINKS.some((d) => MENU[d][5] !== false);
-        if (MENU[CDRINKS[csel[x].drink]][5] === false) {
-          const firstDrink = CDRINKS.findIndex((d) => MENU[d][5] !== false);
+        const available = MENU[dog][5] !== false && MENU[dog][6] !== false && MENU[side][5] !== false && MENU[side][6] !== false && CDRINKS.some((d) => MENU[d][5] !== false && MENU[d][6] !== false);
+        if (MENU[CDRINKS[csel[x].drink]][5] === false || MENU[CDRINKS[csel[x].drink]][6] === false) {
+          const firstDrink = CDRINKS.findIndex((d) => MENU[d][5] !== false && MENU[d][6] !== false);
           if (firstDrink >= 0) csel[x].drink = firstDrink;
         }
         const meat = OPTS[dog] ? "<label>" + t("meat") + '<select data-c="' + x + '" data-k="meat">' +
           OPTS[dog].map((m, k) => '<option value="' + k + '"' + (csel[x].meat === k ? " selected" : "") + ">" + m[lg()] + "</option>").join("") + "</select></label>" : "";
         const drink = "<label>" + t("drinkL") + '<select data-c="' + x + '" data-k="drink">' +
-          CDRINKS.map((d, k) => '<option value="' + k + '"' + (MENU[d][5] === false ? " disabled" : "") + (csel[x].drink === k ? " selected" : "") + ">" + nm[d] + "</option>").join("") + "</select></label>";
-        return '<article class="ccard' + (anim ? " reveal" : "") + '"><div class="cph">🌭' + imgTag("image/" + MENU[dog][3], 0, c[1 + lg()]) +
+          CDRINKS.map((d, k) => '<option value="' + k + '"' + (MENU[d][5] === false || MENU[d][6] === false ? " disabled" : "") + (csel[x].drink === k ? " selected" : "") + ">" + nm[d] + "</option>").join("") + "</select></label>";
+        return '<article class="ccard' + (anim ? " reveal" : "") + '"><div class="cph">🌭' + imgTag(photoBase(MENU[dog][3]), 0, c[1 + lg()]) +
           '<span class="save">' + t("save")(fmt(old - c[5])) + "</span></div>" +
           '<div class="cinfo"><span class="tag">' + t("combo") + "</span><h3>" + c[1 + lg()] + "</h3>" +
           '<p class="cinc">' + nm[dog] + " + " + nm[side] + " + " + t("adrink") + "</p>" +
@@ -727,7 +730,7 @@
       $("grid").innerHTML = items.map((i) => {
         const m = MENU[i], nm = nameOf(i), available = m[5] !== false, label = available ? (OPTS[i] ? t("choose") : t("add")) : t("soldOut");
         return '<article class="card' + (anim ? " reveal" : "") + '"><button class="ph" type="button" data-v="' + i + '" aria-label="' + t("view") + " " + nm + '">' + m[4] +
-          imgTag("image/" + m[3], 0, nm) + "</button>" +
+          imgTag(photoBase(m[3]), 0, nm) + "</button>" +
           '<div class="info' + (available ? "" : " sold-out") + '"><span class="tag">' + t(m[2]) + "</span><h3>" + nm + "</h3>" +
           '<div class="row"><span class="price" dir="ltr">' + fmt(m[1]) + '</span><button class="add" data-x="' + i + '"' + (available ? "" : " disabled") + ' aria-label="' + label + " " + nm + '">' + label + "</button></div></div></article>";
       }).join("") || (showC ? "" : '<p class="none" role="status">' + t("none") + "</p>");
@@ -752,10 +755,11 @@
 
     /* ---------- Team and reviews ---------- */
     function drawTeam(anim) {
-      $("tgrid").innerHTML = TEAM.map(([en, ar, r, f], x) => {
+      $("tgrid").innerHTML = TEAM.map(([en, ar, roleEn, roleAr, photo, active], x) => {
+        if (active === false) return "";
         const n = L === "ar" ? ar : en;
         return '<article class="tcard' + (anim ? " reveal" : "") + '"><button class="tp" type="button" data-t="' + x + '" aria-label="' + t("view") + " " + n + '"><span aria-hidden="true">' + n.charAt(0) + "</span>" +
-          imgTag("image/" + f, 1, n) + "</button><h3>" + n + '</h3><p class="role">' + (L === "ar" ? ROLE_AR[r] : r) + "</p></article>";
+          imgTag(photoBase(photo), 1, n) + "</button><h3>" + n + '</h3><p class="role">' + (L === "ar" ? (roleAr || ROLE_AR[roleEn] || roleEn) : roleEn) + "</p></article>";
       }).join("");
       if (anim) watch($("tgrid"));
     }
@@ -795,12 +799,12 @@
     function fillView() {
       const team = vk === "t", img = $("lb-img"), box = $("lb-photo");
       let base, start = 0, nm, emoji, tag;
-      if (team) { const r = TEAM[view]; nm = L === "ar" ? r[1] : r[0]; base = "image/" + r[3]; start = 1; emoji = nm.charAt(0); tag = L === "ar" ? ROLE_AR[r[2]] : r[2]; }
-      else { const m = MENU[view]; nm = nameOf(view); base = "image/" + m[3]; emoji = m[4]; tag = t(m[2]); }
+      if (team) { const r = TEAM[view]; nm = L === "ar" ? r[1] : r[0]; base = photoBase(r[4]); start = 1; emoji = nm.charAt(0); tag = L === "ar" ? (r[3] || ROLE_AR[r[2]] || r[2]) : r[2]; }
+      else { const m = MENU[view]; nm = nameOf(view); base = photoBase(m[3]); emoji = m[4]; tag = t(m[2]); }
       box.className = "lb-photo" + (team ? " full" : "");
       img.style.visibility = "visible"; img.alt = nm;
       if (viewSrc) { img.dataset.base = ""; img.src = viewSrc; }
-      else { img.dataset.base = base; img.dataset.s = start; img.dataset.a = 0; img.src = base + EXTS[start]; }
+      else { img.dataset.base = base; img.dataset.s = start; img.dataset.a = 0; img.src = /^(https?:|data:|blob:)/i.test(base) ? base : base + EXTS[start]; }
       if (img.complete && img.naturalWidth > 0) box.classList.add("ok");
       $("lb-emoji").textContent = emoji;
       $("lb-tag").textContent = tag;
@@ -810,7 +814,7 @@
       $("lb-opts").innerHTML = team ? "" : optsHTML(view);
       $("lb-row").hidden = team;
       if (!team) {
-        const available = MENU[view][5] !== false;
+        const available = MENU[view][5] !== false && MENU[view][6] !== false;
         $("lb-price").textContent = fmt(lbTotal());
         $("lb-add").textContent = available ? t("add") : t("soldOut");
         $("lb-add").disabled = !available;
@@ -1219,6 +1223,7 @@
       $("close-side").setAttribute("aria-label", t("closeMenu"));
       $("wa").href = "https://wa.me/" + PHONE + "?text=" + encodeURIComponent("Hello Tarhini’s Dogs!");
       redraw(anim);
+      applyManagedSettings();
       animateBlurText();
       try { localStorage.setItem("lang", l); } catch (e) {}
     }
@@ -1255,6 +1260,71 @@
       } catch (e) {}
     }
 
+    function managedPhoto(path) {
+      if (!path) return "";
+      if (/^(https?:|data:|blob:)/i.test(path) || path.startsWith("image/")) return path;
+      const cfg = window.TARHINI_SUPABASE || {};
+      if (!window.supabase?.createClient || !cfg.url || !cfg.publishableKey) return "";
+      const client = window.supabase.createClient(cfg.url, cfg.publishableKey);
+      return client.storage.from(cfg.bucket || "store-media").getPublicUrl(path).data.publicUrl;
+    }
+    function applyManagedSettings() {
+      if (!managedSettings) return;
+      const address = L === "ar" ? managedSettings.address_ar : managedSettings.address_en;
+      const hours = L === "ar" ? managedSettings.hours_ar : managedSettings.hours_en;
+      const addressNode = $("store-address"), hoursNode = $("store-hours"), phoneNode = $("store-phone"), emailNode = $("store-email"), directions = $("store-directions");
+      if (addressNode) addressNode.textContent = address || "";
+      if (hoursNode) hoursNode.textContent = hours || "";
+      document.querySelectorAll(".locp").forEach((node) => { node.textContent = address || ""; });
+      PHONE = (managedSettings.whatsapp_phone || managedSettings.phone || "9613683218").replace(/\D/g, "");
+      if (phoneNode) { phoneNode.textContent = managedSettings.phone || ""; phoneNode.href = "tel:" + (managedSettings.phone || "").replace(/[^+\d]/g, ""); }
+      if (emailNode) { emailNode.textContent = managedSettings.email || ""; emailNode.href = "mailto:" + (managedSettings.email || ""); }
+      if (directions && managedSettings.directions_url) directions.href = managedSettings.directions_url;
+      const map = $("store-map");
+      if (map && address) map.src = "https://www.google.com/maps?q=" + encodeURIComponent(address) + "&output=embed";
+      $("wa").href = "https://wa.me/" + PHONE + "?text=" + encodeURIComponent("Hello Tarhini’s Dogs!");
+    }
+    async function loadManagedContent() {
+      const cfg = window.TARHINI_SUPABASE || {};
+      if (!cfg.url || !cfg.publishableKey || !window.supabase?.createClient) return;
+      try {
+        const db = window.supabase.createClient(cfg.url, cfg.publishableKey);
+        const [settingsRes, menuRes, staffRes] = await Promise.all([
+          db.from("store_settings").select("*").eq("id", true).single(),
+          db.from("menu_items").select("*").eq("active", true).order("sort_order", { ascending: true }),
+          db.from("staff_members").select("*").eq("active", true).order("sort_order", { ascending: true })
+        ]);
+        if (settingsRes.error || menuRes.error || staffRes.error) throw settingsRes.error || menuRes.error || staffRes.error;
+        managedSettings = settingsRes.data;
+        const known = new Set();
+        (menuRes.data || []).forEach((row) => {
+          const photo = managedPhoto(row.photo_path);
+          const index = MENU.findIndex((item) => item[8] === row.slug);
+          if (index >= 0) {
+            known.add(index); MENU[index][0] = row.name_en; MENU[index][1] = Number(row.price); MENU[index][2] = row.category;
+            MENU[index][3] = photo || row.photo_path || MENU[index][3]; MENU[index][4] = row.emoji || "🌭";
+            MENU[index][5] = row.available; MENU[index][6] = true; MENU[index][7] = row.id; MENU[index][8] = row.slug;
+            NAME_EN[index] = row.name_en; NAME_AR[index] = row.name_ar || row.name_en;
+            DESC.en[index] = row.description_en || ""; DESC.ar[index] = row.description_ar || "";
+          } else {
+            const next = MENU.length;
+            MENU.push([row.name_en, Number(row.price), row.category, photo || row.photo_path || "", row.emoji || "🌭", row.available, true, row.id, row.slug]);
+            NAME_EN.push(row.name_en); NAME_AR.push(row.name_ar || row.name_en); DESC.en.push(row.description_en || ""); DESC.ar.push(row.description_ar || "");
+          }
+        });
+        for (let i = 0; i < BASE_MENU_COUNT; i++) if (!known.has(i)) MENU[i][6] = false;
+        const visibleStaff = staffRes.data || [], staffKnown = new Set();
+        visibleStaff.forEach((row) => {
+          const index = TEAM.findIndex((person) => person[0].toLowerCase() === row.name_en.toLowerCase());
+          const person = [row.name_en, row.name_ar, row.role_en, row.role_ar, managedPhoto(row.photo_path) || row.photo_path || "", true];
+          if (index >= 0) { TEAM[index] = person; staffKnown.add(index); } else TEAM.push(person);
+        });
+        for (let i = 0; i < 3; i++) if (!staffKnown.has(i)) TEAM[i][5] = false;
+        applyManagedSettings();
+      } catch (error) {
+        console.warn("Store content could not be loaded; showing the saved site content.", error);
+      }
+    }
     /* ---------- Start ---------- */
     let savedLang = "en", savedTheme = "light";
     try {
@@ -1265,11 +1335,11 @@
     } catch (e) {}
     $("cur").value = cur;
     setTheme(savedTheme === "dark");
-    setLang(savedLang);
-    loadRates();
+    loadManagedContent().finally(() => { setLang(savedLang); applyManagedSettings(); loadRates(); });
     window.addEventListener("resize", moveSlider);
     window.addEventListener("load", moveSlider);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(moveSlider);
   </script>
 </body>
 </html>
+    const NAME_EN = MENU.map((m) => m[0]);
